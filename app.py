@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import numpy as np
 import cv2
 import keras
@@ -12,40 +11,33 @@ model.load_weights('model/best_weights.h5')
 label_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happiness', 4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
 face_haar_cascade = cv2.CascadeClassifier('model/haarcascade_frontalface_default.xml')
 
-class EmotionDetector(VideoProcessorBase):
-    def __init__(self):
-        super().__init__()
+uploaded_file = st.file_uploader("Upload a photo", type=["jpg", "jpeg", "png"])
 
-    def recv(self, frame):
-        cap_image = frame.to_ndarray(format="bgr24")
-        cap_img_gray = cv2.cvtColor(cap_image, cv2.COLOR_BGR2GRAY)
+if uploaded_file is not None:
+    # Read the uploaded image file
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    image = cv2.imdecode(file_bytes, 1)
 
-        faces = face_haar_cascade.detectMultiScale(cap_img_gray, 1.3, 5)
+    # Convert image to grayscale
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        for (x, y, w, h) in faces:
-            cv2.rectangle(cap_image, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            roi_gray = cap_img_gray[y:y+h, x:x+w]
-            roi_gray = cv2.resize(roi_gray, (48, 48))
-            img_pixels = image.img_to_array(roi_gray)
-            img_pixels = np.expand_dims(img_pixels, axis=0)
+    # Detect faces in the image
+    faces = face_haar_cascade.detectMultiScale(image_gray, 1.3, 5)
 
-            predictions = model.predict(img_pixels)
-            emotion_label = np.argmax(predictions)
+    # Process each detected face
+    for (x, y, w, h) in faces:
+        cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 2)
+        roi_gray = image_gray[y:y+h, x:x+w]
+        roi_gray = cv2.resize(roi_gray, (48, 48))
+        img_pixels = image.img_to_array(roi_gray)
+        img_pixels = np.expand_dims(img_pixels, axis=0)
 
-            emotion_prediction = label_dict[emotion_label]
+        predictions = model.predict(img_pixels)
+        emotion_label = np.argmax(predictions)
 
-            cv2.putText(cap_image, emotion_prediction, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 1)
+        emotion_prediction = label_dict[emotion_label]
 
-        return cap_image
+        cv2.putText(image, emotion_prediction, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 1)
 
-webrtc_ctx = webrtc_streamer(
-    key="emotion-detection",
-    video_processor_factory=EmotionDetector,
-    async_processing=True,
-    desired_playing_width=640,
-    # Add other parameters as needed
-)
-
-if webrtc_ctx.video_processor:
-    st.video(webrtc_ctx.video_processor.frame_out)
-
+    # Display the processed image with bounding boxes and emotion labels
+    st.image(image, channels='BGR')
