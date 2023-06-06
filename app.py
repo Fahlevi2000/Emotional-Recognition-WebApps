@@ -29,7 +29,7 @@ if uploaded_file is not None:
         cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 2)
         roi_gray = image_gray[y:y+h, x:x+w]
         roi_gray = cv2.resize(roi_gray, (48, 48))
-        img_pixels = image.img_to_array(roi_gray)
+        img_pixels = np.asarray(roi_gray)
         img_pixels = np.expand_dims(img_pixels, axis=0)
 
         predictions = model.predict(img_pixels)
@@ -37,7 +37,10 @@ if uploaded_file is not None:
 
         emotion_prediction = label_dict[emotion_label]
 
-        cv2.putText(image, emotion_prediction, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 1)
+        cv2.putText(image, emotion_prediction, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+
+        # Add additional information
+        cv2.putText(image, f"Emotion: {emotion_prediction}", (int(x), int(y + h + 30)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 1)
 
     # Display the processed image with bounding boxes and emotion labels
     st.image(image, channels='BGR')
