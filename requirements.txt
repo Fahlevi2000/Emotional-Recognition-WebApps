@@ -9,3 +9,4 @@ imbalanced-learn==0.10.1
 opencv-python==4.6.0.66
 opencv-contrib-python==4.6.0.66
 scipy==1.9.3
+libgl1-mesa-glx
