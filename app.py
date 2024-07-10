@@ -30,7 +30,7 @@ def make_prediction(image):
     return class_label
 
 # Streamlit app
-uploaded_file = st.file_uploader('Upload an image', type=['jpg', 'jpeg', 'png'])
+uploaded_file = st.file_uploader('Upload an image', type=['jfif','jpg', 'jpeg', 'png'])
 
 if uploaded_file is not None:
     # Read the image file and display it
